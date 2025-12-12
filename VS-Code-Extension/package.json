@@ -1,0 +1,59 @@
+{
+  "name": "fedrag-vscode-extension",
+  "displayName": "Fedrag",
+  "description": "Sidebar chat that sends editor context to a recommendation service.",
+  "version": "0.0.1",
+  "publisher": "your-name-here",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:fedrag.start",
+    "onView:fedragSidebar"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "fedrag.start",
+        "title": "Open Fedrag Chat"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fedrag",
+          "title": "Fedrag",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fedrag": [
+        {
+          "id": "fedragSidebar",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
+

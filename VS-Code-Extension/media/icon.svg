@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fedrag">
+  <rect width="128" height="128" rx="24" fill="#3B82F6"/>
+  <path d="M36 50c0-6.627 5.373-12 12-12h48v48H48c-6.627 0-12-5.373-12-12V50Z" fill="#1F2937"/>
+  <circle cx="52" cy="64" r="8" fill="#F3F4F6"/>
+  <path d="M72 56h18v16H72a8 8 0 0 1-8-8v0a8 8 0 0 1 8-8Z" fill="#FBBF24"/>
+</svg>
+
+
