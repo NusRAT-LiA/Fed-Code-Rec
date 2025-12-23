@@ -113,11 +113,7 @@ def get_sanitizer_stats() -> Dict[str, int]:
 if __name__ == "__main__":
     # Test the sanitizer
     test_cases = [
-        # Test IPv4
-        "server_ip = '192.168.1.100'",
         
-        # Test API Key
-      
     ]
     
     print("=== Sanitization Tests ===\n")

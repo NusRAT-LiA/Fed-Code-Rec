@@ -136,6 +136,13 @@ async def search(request: SearchRequest):
     Returns:
         List of sanitized code results
     """
+     # --- MINIMAL DEBUG ---
+    import logging
+    logger = logging.getLogger("uvicorn.error")
+    logger.info(f"DEBUG /search got request: {request}")
+    logger.info(f"DEBUG index size: {index.ntotal if index else 'None'}; metadata: {len(metadata) if metadata else 'None'}")
+    # --- END DEBUG ---
+    
     if index is None or metadata is None:
         raise HTTPException(
             status_code=503,
