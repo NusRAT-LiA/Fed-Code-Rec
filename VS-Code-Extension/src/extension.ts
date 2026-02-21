@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
       }
     );
-    console.log('[Fedrag Extension] ✅ registerWebviewViewProvider SUCCESS');
+    console.log('[Fedrag Extension]  registerWebviewViewProvider SUCCESS');
     console.log('[Fedrag Extension] Registered viewType:', viewTypeToRegister);
     console.log('[Fedrag Extension] Registration Disposable:', registration);
     context.subscriptions.push(registration);

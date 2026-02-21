@@ -335,13 +335,13 @@ class SidebarProvider {
             const editor = vscode.window.activeTextEditor;
             const contextText = editor ? editor.document.getText() : '';
             // Send a temporary "thinking" status if you wanted to add that UI state later
-            // this._view?.webview.postMessage({ type: 'thinking' });
+            this._view?.webview.postMessage({ type: 'thinking' });
             try {
                 const response = await axios_1.default.post('http://localhost:8000/recommend', {
-                    message: userMessage,
-                    context: contextText,
+                    query: userMessage,
+                    //context: contextText,
                 });
-                const markdown = response.data?.message ?? response.data ?? '';
+                const markdown = response.data?.response ?? '';
                 this._view?.webview.postMessage({ type: 'response', markdown });
             }
             catch (error) {
