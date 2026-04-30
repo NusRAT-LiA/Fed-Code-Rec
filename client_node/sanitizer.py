@@ -30,8 +30,8 @@ class CodeSanitizer:
                 '[DB_CONNECTION]'
             ),
             'internal_package': (
-                r'\b(from|import)\s+(acme|internal|proprietary)_\w+',
-                r'\1 [ORG]_package'
+               r'\b(from|import)\s+(acme|internal|proprietary)[a-zA-Z0-9_\.]*',
+               r'\1 [ORG]_package'
             ),
             'aws_key': (
                 r'AKIA[0-9A-Z]{16}',
@@ -110,23 +110,3 @@ def get_sanitizer_stats() -> Dict[str, int]:
     return _sanitizer.get_redaction_stats()
 
 
-if __name__ == "__main__":
-    # Test the sanitizer
-    test_cases = [
-        
-    ]
-    
-    print("=== Sanitization Tests ===\n")
-    
-    for i, code in enumerate(test_cases, 1):
-        sanitized = sanitize_code(code)
-        print(f"Test {i}:")
-        print(f"  Original:  {code}")
-        print(f"  Sanitized: {sanitized}")
-        print()
-    
-    print("=== Redaction Statistics ===")
-    stats = get_sanitizer_stats()
-    for pattern_type, count in stats.items():
-        if count > 0:
-            print(f"  {pattern_type}: {count} redaction(s)")

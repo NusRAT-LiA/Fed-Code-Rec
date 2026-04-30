@@ -1,0 +1,376 @@
+# Federated RAG System - Complete Setup Guide
+
+## Requirements Files
+
+### shared_core/requirements.txt
+```
+torch>=2.0.0
+transformers>=4.30.0
+sentence-transformers>=2.2.0
+tree-sitter>=0.20.0
+tree-sitter-python>=0.20.0
+numpy>=1.24.0
+```
+
+### fl_server/requirements.txt
+```
+flwr>=1.5.0
+torch>=2.0.0
+numpy>=1.24.0
+```
+
+### client_node/requirements.txt
+```
+flwr>=1.5.0
+torch>=2.0.0
+opacus>=1.4.0
+faiss-cpu>=1.7.4
+numpy>=1.24.0
+scikit-learn>=1.3.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+httpx>=0.24.0
+```
+
+### gateway/requirements.txt
+```
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+httpx>=0.24.0
+requests>=2.31.0
+numpy>=1.24.0
+
+# LLM Provider Options (install the one you need)
+google-generativeai>=0.3.0  # For Gemini
+# openai>=1.0.0              # For OpenAI (uncomment if using)
+# anthropic>=0.18.0          # For Anthropic (uncomment if using)
+```
+
+---
+
+##  Complete Setup Instructions
+
+### Step 1: Get Gemini API Key (Free Tier Available!)
+
+**Option A: Use Gemini (Recommended - Free & Fast)**
+```bash
+# 1. Go to https://aistudio.google.com/app/apikey
+# 2. Click "Create API Key"
+# 3. Copy your key and set it:
+export GEMINI_API_KEY="your-key-here"
+
+# 4. Install Gemini SDK
+pip install google-generativeai
+```
+
+**Option B: Use OpenAI**
+```bash
+export OPENAI_API_KEY="your-key-here"
+pip install openai
+```
+
+**Option C: Use Anthropic Claude**
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+```
+
+**Option D: Use Ollama (Local - Not Recommended for MacBook)**
+```bash
+# Only if you have a powerful machine
+ollama serve
+ollama pull codellama:7b
+```
+
+### Step 2: Configure LLM Provider
+
+Edit `shared_core/config.py`:
+```python
+# Change this to your preferred provider
+LLM_PROVIDER = "gemini"  # or "openai", "anthropic", "ollama"
+```
+
+### Step 2: Install Python Dependencies
+```bash
+# Install for each component
+cd shared_core && pip install -r requirements.txt && cd ..
+cd fl_server && pip install -r requirements.txt && cd ..
+cd client_node && pip install -r requirements.txt && cd ..
+cd gateway && pip install -r requirements.txt && cd ..
+```
+
+### Step 3: Generate Dummy Data
+```bash
+cd client_node
+python setup_dummy.py
+```
+
+This creates:
+- `org_A/` - Data science code
+- `org_B/` - Web development code
+- `org_C/` - Enterprise code
+
+### Step 4: Build Indices for Each Organization
+```bash
+# Organization A
+cd org_A
+python ../indexer.py --data-dir ./data
+
+# Organization B
+cd ../org_B
+python ../indexer.py --data-dir ./data
+
+# Organization C
+cd ../org_C
+python ../indexer.py --data-dir ./data
+```
+
+### Step 5: Start the System (6-7 terminals, NO Ollama needed!)
+
+**Terminal 1 - FL Server:**
+```bash
+cd fl_server
+python3 server.py
+```
+
+**Terminal 2 - Org A Client (Training):**
+```bash
+cd client_node/org_A
+python3 ../train.py --data-dir ./ --server 127.0.0.1:8080
+```
+
+**Terminal 3 - Org B Client (Training):**
+```bash
+cd client_node/org_B
+python3 ../train.py --data-dir ./ --server 127.0.0.1:8080
+```
+
+**Terminal 4 - Org C Client (Training):**
+```bash
+cd client_node/org_C
+python ../train.py --data-dir ./ --server 127.0.0.1:8080
+```
+
+Wait for FL training to complete (3-5 rounds), then:
+
+**Terminal 5 - Org A Search API:**
+```bash
+cd client_node/org_A
+python ../search_api.py --port 8001
+```
+
+**Terminal 6 - Org B Search API:**
+```bash
+cd client_node/org_B
+python ../search_api.py --port 8002
+```
+
+**Terminal 7 - Org C Search API:**
+```bash
+cd client_node/org_C
+python ../search_api.py --port 8003
+```
+
+**Terminal 8 - Gateway:**
+```bash
+cd gateway
+python main.py
+```
+
+---
+
+## 🧪 Testing the System
+
+### Test 1: Health Check
+```bash
+curl http://localhost:8000/health
+```
+
+### Test 2: Manual Query
+```bash
+curl -X POST http://localhost:8000/recommend \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "How do I authenticate a user with password hashing?",
+    "context": ""
+  }'
+```
+
+### Test 3: Check Privacy Budget
+Check the terminal logs from the training clients. You should see:
+```
+Privacy spent: ε=0.89 (δ=1e-5)
+```
+
+### Test 4: Verify Sanitization
+```bash
+curl http://localhost:8001/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vector": [0.1, 0.2, ..., 0.384],
+    "top_k": 3
+  }'
+```
+
+Look for `[IP_REDACTED]` and `[SECRET_REDACTED]` in results.
+
+---
+
+##  Expected Output
+
+### FL Training Output:
+```
+Round 1: Saved global model to shared_core/global_model.pth
+  - Clients participated: 3
+  - Privacy spent: ε=0.45 (δ=1e-5)
+
+Round 2: Saved global model to shared_core/global_model.pth
+  - Clients participated: 3
+  - Privacy spent: ε=0.89 (δ=1e-5)
+
+...
+
+Federated Learning Complete!
+```
+
+### Gateway Output:
+```
+New recommendation request
+Query: How do I authenticate a user?
+Starting distributed retrieval...
+Client 0: 5 results
+Client 1: 4 results
+Client 2: 3 results
+Retrieved 12 total results from 3 nodes
+Generating recommendation with LLM...
+Request completed in 2345.67ms
+```
+
+---
+
+## 🎯 Demo Script
+
+### Scenario: Developer asks for authentication code
+
+**Query:**
+```
+"How do I implement secure user authentication with password hashing?"
+```
+
+**Expected Flow:**
+1. Gateway embeds query using federated model
+2. Queries all 3 org nodes in parallel
+3. Org B returns auth service code (sanitized)
+4. Org A returns generic password utilities
+5. Ollama synthesizes a new implementation
+6. Returns code that combines patterns (not copies)
+
+**Result:**
+```python
+# Synthesized authentication system
+class AuthenticationService:
+    def __init__(self):
+        self.hash_algorithm = 'pbkdf2_hmac'
+    
+    def register_user(self, username, password):
+        # Generate salt and hash
+        salt = generate_salt()
+        password_hash = self.hash_password(password, salt)
+        # Store in database
+        return save_user(username, password_hash, salt)
+    
+    def verify_credentials(self, username, password):
+        # Retrieve stored hash
+        user = get_user(username)
+        # Verify password
+        return self.compare_hashes(
+            password, 
+            user.salt, 
+            user.password_hash
+        )
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Issue: "Index not loaded"
+**Solution:** Run `python indexer.py` in each org directory first
+
+### Issue: "Cannot connect to Ollama"
+**Solution:** You're using Gemini now! Make sure you set:
+```bash
+export GEMINI_API_KEY="your-key-here"
+# And in config.py:
+LLM_PROVIDER = "gemini"
+```
+
+### Issue: FL clients can't connect
+**Solution:** Make sure FL server is running first on port 8080
+
+### Issue: "Privacy budget exceeded"
+**Solution:** This is normal after many rounds. Reduce `DP_NOISE_MULTIPLIER` in config.py
+
+### Issue: Gateway returns empty results
+**Solution:** Check that search APIs are running on ports 8001, 8002, 8003
+
+---
+
+## 📈 Monitoring
+
+### Check Index Stats:
+```bash
+curl http://localhost:8001/stats
+curl http://localhost:8002/stats
+curl http://localhost:8003/stats
+```
+
+### Check Privacy Budget:
+Look for this in training client logs:
+```
+Privacy spent: ε=X.XX (δ=1e-5)
+WARNING if ε > 5.0
+```
+
+### Check Query Performance:
+Gateway returns `query_time_ms` in response:
+```json
+{
+  "query_time_ms": 1234.56
+}
+```
+
+---
+
+## 🎓 What This Demonstrates
+
+✅ **Federated Learning:** 3 orgs train shared embedding model  
+✅ **Differential Privacy:** Formal ε-δ guarantees via Opacus  
+✅ **Distributed Retrieval:** Parallel queries across private indices  
+✅ **IP Protection:** Sanitization before cross-org sharing  
+✅ **Code Synthesis:** LLM generates new code, doesn't copy  
+
+---
+
+## 📝 Known Limitations (For Prototype)
+
+❌ No real authentication (mock only)  
+❌ No caching (queries hit all nodes)  
+❌ No load balancing  
+❌ Simple regex sanitization (not bulletproof)  
+❌ No adversarial robustness testing  
+❌ Fixed to 3 organizations  
+
+---
+
+## 🚀 Next Steps for Production
+
+1. Add OAuth/SSO authentication
+2. Implement Redis caching
+3. Use Kubernetes for orchestration
+4. Add monitoring (Prometheus/Grafana)
+5. Legal review of IP protection rules
+6. Security audit
+7. Scalability testing (100+ orgs)

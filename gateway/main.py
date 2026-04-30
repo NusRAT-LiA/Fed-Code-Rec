@@ -130,7 +130,7 @@ async def query_client_node(client_url: str, query_vector: List[float],
     "top_k": TOP_K_RESULTS
 }
     # DEBUG: print out payload and URL before request
-    logger.info(f"DEBUG outgoing POST to {search_url} with payload: {payload}")
+    # logger.info(f"DEBUG outgoing POST to {search_url} with payload: {payload}")
     
     try:
         async with httpx.AsyncClient() as client:
